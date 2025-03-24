@@ -1,17 +1,31 @@
 "use client";
 
 import Image from "next/image";
-import { ConnectButton } from "thirdweb/react";
+import {
+  ConnectButton,
+  useActiveAccount,
+  useWalletBalance,
+} from "thirdweb/react";
+import { defineChain } from "thirdweb/chains";
 import thirdwebIcon from "@public/thirdweb.svg";
 import { client } from "./client";
 
 export default function Home() {
+  const account = useActiveAccount();
+  const chain = defineChain(1); // Change to your desired blockchain
+
+  const { data: balance, isLoading } = useWalletBalance({
+    client,
+    chain,
+    address: account?.address,
+  });
+
   return (
     <main className="p-4 pb-10 min-h-[100vh] flex items-center justify-center container max-w-screen-lg mx-auto">
       <div className="py-20">
         <Header />
 
-        <div className="flex justify-center mb-20">
+        <div className="flex flex-col items-center justify-center mb-20">
           <ConnectButton
             client={client}
             appMetadata={{
@@ -19,6 +33,11 @@ export default function Home() {
               url: "https://example.com",
             }}
           />
+
+          <p className="mt-2">Wallet address: {account?.address}</p>
+          <p>
+            Wallet balance: {balance?.displayValue} {balance?.symbol}
+          </p>
         </div>
 
         <ThirdwebResources />
