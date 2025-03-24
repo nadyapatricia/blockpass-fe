@@ -9,6 +9,7 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
+import Header from "@/components/ui/header";
 
 // Example placeholder event data
 const events = [
@@ -23,11 +24,7 @@ const events = [
 export default function HomePage() {
   return (
     <main className="container mx-auto p-4">
-      {/* Header */}
-      <header className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">My Tickets dApp</h1>
-        {/* If you have a navbar or user account button, you could add it here */}
-      </header>
+      <Header />
 
       {/* Search bar & Create button */}
       <div className="mb-6 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
