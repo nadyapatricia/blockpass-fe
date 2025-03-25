@@ -4,7 +4,7 @@ import { client } from "./client";
 
 import { ConnectButton } from "thirdweb/react";
 import { getContract } from "thirdweb";
-import { sepolia } from "thirdweb/chains";
+import { baseSepolia } from "thirdweb/chains";
 import { useReadContract } from "thirdweb/react";
 
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,7 @@ const events = [
 const contract = getContract({
   client,
   address: "0x10e296eAf59D063Ab26412892803A025d83a3D5B",
-  chain: sepolia,
+  chain: baseSepolia,
 });
 
 export default function HomePage() {
@@ -52,12 +52,6 @@ export default function HomePage() {
 
       <ConnectButton client={client} />
 
-      {isLoading ? (
-        <div className="my-3">Loading..</div>
-      ) : (
-        <div className="my-3">getAllEvents: {data}</div>
-      )}
-
       {/* Search bar & Create button */}
       <div className="my-6 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
         <Input
@@ -68,21 +62,24 @@ export default function HomePage() {
         <Button className="whitespace-nowrap">Create Event</Button>
       </div>
 
-      {/* Events grid */}
-      <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-        {events.map((event) => (
-          <Card key={event.id} className="transition-shadow hover:shadow-lg">
-            <CardHeader>
-              <CardTitle>{event.title}</CardTitle>
-              <CardDescription>{event.desc}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {/* Replace with Next.js Link for dynamic routing, e.g., /events/[id] */}
-              <Button variant="outline">View Details</Button>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {isLoading ? (
+        <p>Loading events..</p>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          {data?.map((event, index) => (
+            <Card className="transition-shadow hover:shadow-lg">
+              <CardHeader>
+                <CardTitle>{index}</CardTitle>
+                <CardDescription>{event}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {/* Replace with Next.js Link for dynamic routing, e.g., /events/[id] */}
+                <Button variant="outline">View Details</Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </main>
   );
 }
