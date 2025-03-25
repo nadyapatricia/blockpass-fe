@@ -35,11 +35,16 @@ const contract = getContract({
 });
 
 export default function HomePage() {
-  const { data, isLoading } = useReadContract({
+  const { data, isLoading, error } = useReadContract({
     contract,
     method: "function getAllEvents() external view returns (address[] memory)",
-    // params: [1n], // type safe params
   });
+
+  if (error) {
+    console.error("Error reading contract:", error);
+  }
+
+  console.log(data, "getAllEvents");
 
   return (
     <main className="container mx-auto p-4">
