@@ -5,6 +5,7 @@ import "./globals.css";
 import { ThirdwebProvider } from "thirdweb/react";
 import Header from "@/components/ui/header";
 import { cn } from "@/lib/utils";
+import { Toaster } from "@/components/ui/toaster";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -23,6 +24,7 @@ export default function RootLayout({
       <body className={cn(inter.className, "container mx-auto p-4")}>
         <ThirdwebProvider>
           <Header />
+          <Toaster />
           {children}
         </ThirdwebProvider>
       </body>
