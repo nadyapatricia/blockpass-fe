@@ -95,9 +95,42 @@ export default function CreateEventForm() {
   function onSubmit(values: z.infer<typeof formSchema>) {
     // Here you would typically send the data to your API
     console.log(values);
+
+    // Format dates for display in toast
+    const formattedValues = {
+      ...values,
+      eventStartDate: format(values.eventStartDate, "PPP"),
+      eventEndDate: format(values.eventEndDate, "PPP"),
+      ticketSaleStartDate: format(values.ticketSaleStartDate, "PPP"),
+      ticketSaleEndDate: format(values.ticketSaleEndDate, "PPP"),
+      bannerImage: values.bannerImage.name,
+    };
+
+    // Create a formatted string of form values
+    const formattedDetails = Object.entries(formattedValues)
+      .map(([key, value]) => {
+        // Convert camelCase to Title Case with spaces
+        const formattedKey = key
+          .replace(/([A-Z])/g, " $1")
+          .replace(/^./, (str) => str.toUpperCase());
+
+        return `${formattedKey}: ${value}`;
+      })
+      .join("\n");
+
     toast({
       title: "Event created successfully!",
-      description: "Your event has been created and is now pending approval.",
+      description: (
+        <div className="mt-2 max-h-[200px] overflow-y-auto text-sm">
+          <p className="mb-2">
+            Your event has been created with the following details:
+          </p>
+          <pre className="whitespace-pre-wrap rounded bg-slate-100 p-2 dark:bg-slate-800">
+            {formattedDetails}
+          </pre>
+        </div>
+      ),
+      duration: 5000, // Show for 5 seconds
     });
   }
 
