@@ -18,16 +18,6 @@ import {
 } from "@/components/ui/card";
 import Header from "@/components/ui/header";
 
-// Example placeholder event data
-const events = [
-  { id: 1, title: "Blockchain Summit", desc: "Learn about blockchain tech" },
-  { id: 2, title: "Crypto Expo", desc: "The biggest crypto event in town" },
-  { id: 3, title: "NFT Meetup", desc: "All about NFTs and digital art" },
-  { id: 4, title: "Web3 Conference", desc: "Decentralized future is here" },
-  { id: 5, title: "Dev meetup", desc: "Dinner and chit-chat sesh for devs" },
-  { id: 6, title: "Hackaton 2025", desc: "Biggest Hackaton for Solidity devs" },
-];
-
 const contract = getContract({
   client,
   address: "0x10e296eAf59D063Ab26412892803A025d83a3D5B",
