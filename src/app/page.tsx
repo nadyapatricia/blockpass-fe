@@ -30,7 +30,7 @@ const events = [
 
 const contract = getContract({
   client,
-  address: "0xF3e9f4F76901523d5FAB287e7FFa139799F03C87",
+  address: "0x10e296eAf59D063Ab26412892803A025d83a3D5B",
   chain: sepolia,
 });
 
