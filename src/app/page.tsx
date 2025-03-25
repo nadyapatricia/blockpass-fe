@@ -1,5 +1,7 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 import { client } from "./client";
 
 import { ConnectButton } from "thirdweb/react";
@@ -16,7 +18,6 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
-import Header from "@/components/ui/header";
 
 const contract = getContract({
   client,
@@ -25,6 +26,8 @@ const contract = getContract({
 });
 
 export default function HomePage() {
+  const router = useRouter();
+
   const { data, isLoading, error } = useReadContract({
     contract,
     method: "function getAllEvents() external view returns (address[] memory)",
@@ -37,9 +40,7 @@ export default function HomePage() {
   console.log(data, "getAllEvents");
 
   return (
-    <main className="container mx-auto p-4">
-      <Header />
-
+    <main className="">
       <ConnectButton client={client} />
 
       {/* Search bar & Create button */}
@@ -49,7 +50,12 @@ export default function HomePage() {
           placeholder="Search events..."
           className="w-full max-w-sm"
         />
-        <Button className="whitespace-nowrap">Create Event</Button>
+        <Button
+          className="whitespace-nowrap"
+          onClick={() => router.push("/create-event")}
+        >
+          Create Event
+        </Button>
       </div>
 
       {isLoading ? (
