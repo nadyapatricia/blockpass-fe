@@ -1,5 +1,12 @@
 "use client";
 
+import { client } from "./client";
+
+import { ConnectButton } from "thirdweb/react";
+import { getContract } from "thirdweb";
+import { sepolia } from "thirdweb/chains";
+import { useReadContract } from "thirdweb/react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -21,13 +28,33 @@ const events = [
   { id: 6, title: "Hackaton 2025", desc: "Biggest Hackaton for Solidity devs" },
 ];
 
+const contract = getContract({
+  client,
+  address: "0xF3e9f4F76901523d5FAB287e7FFa139799F03C87",
+  chain: sepolia,
+});
+
 export default function HomePage() {
+  const { data, isLoading } = useReadContract({
+    contract,
+    method: "function getAllEvents() external view returns (address[] memory)",
+    // params: [1n], // type safe params
+  });
+
   return (
     <main className="container mx-auto p-4">
       <Header />
 
+      <ConnectButton client={client} />
+
+      {isLoading ? (
+        <div className="my-3">Loading..</div>
+      ) : (
+        <div className="my-3">getAllEvents: {data}</div>
+      )}
+
       {/* Search bar & Create button */}
-      <div className="mb-6 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
+      <div className="my-6 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
         <Input
           type="text"
           placeholder="Search events..."
