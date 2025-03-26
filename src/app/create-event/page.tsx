@@ -10,6 +10,7 @@ import * as z from "zod";
 import { format } from "date-fns";
 import { CalendarIcon, Upload, Plus, Trash2 } from "lucide-react";
 import { useState, useRef } from "react";
+import { ethers } from "ethers";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -34,6 +35,164 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
+const MASTER_CONTRACT_ADDRESS = "0x10e296eaf59d063ab26412892803a025d83a3d5b"; // Replace with the actual address
+const MASTER_CONTRACT_ABI: Array<{
+  inputs?: Array<{ internalType: string; name: string; type: string; indexed?: boolean }>;
+  name?: string;
+  outputs?: Array<{ internalType: string; name: string; type: string }>;
+  stateMutability?: string;
+  type: string;
+  anonymous?: boolean; // Added `anonymous` property
+}> = [
+  {
+    "inputs": [
+      { "internalType": "address", "name": "_treasuryContract", "type": "address" },
+      { "internalType": "address", "name": "_usdc_token", "type": "address" },
+      { "internalType": "address", "name": "_ownerModifierAddress", "type": "address" }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "inputs": [],
+    "name": "InsufficientBalance",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidEventTiming",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidSaleTiming",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidTicketData",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NotOwner",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "TransferFail",
+    "type": "error"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "address", "name": "eventAddress", "type": "address" }
+    ],
+    "name": "EventCreated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "address", "name": "owner", "type": "address" },
+      { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }
+    ],
+    "name": "FundsWithdrawn",
+    "type": "event"
+  },
+  {
+    "inputs": [
+      { "internalType": "string", "name": "_name", "type": "string" },
+      { "internalType": "string", "name": "_nftSymbol", "type": "string" },
+      { "internalType": "uint256", "name": "_start", "type": "uint256" },
+      { "internalType": "uint256", "name": "_end", "type": "uint256" },
+      { "internalType": "uint256", "name": "_startSale", "type": "uint256" },
+      { "internalType": "uint256", "name": "_endSale", "type": "uint256" }
+    ],
+    "name": "createEvent",
+    "outputs": [
+      { "internalType": "address", "name": "", "type": "address" }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "", "type": "uint256" }
+    ],
+    "name": "eventContracts",
+    "outputs": [
+      { "internalType": "address", "name": "", "type": "address" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "eventCount",
+    "outputs": [
+      { "internalType": "uint256", "name": "", "type": "uint256" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getAllEvents",
+    "outputs": [
+      { "internalType": "address[]", "name": "", "type": "address[]" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "masterOwnerModifier",
+    "outputs": [
+      { "internalType": "address", "name": "", "type": "address" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "treasuryContract",
+    "outputs": [
+      { "internalType": "address", "name": "", "type": "address" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "usdc_token",
+    "outputs": [
+      { "internalType": "address", "name": "", "type": "address" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "amount", "type": "uint256" }
+    ],
+    "name": "withdraw",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "stateMutability": "payable",
+    "type": "receive"
+  }
+];
+
+declare global {
+  interface Window {
+    ethereum?: any; // Add type declaration for `window.ethereum`
+  }
+}
 
 // Define the ticket type schema
 const ticketTypeSchema = z.object({
@@ -114,7 +273,7 @@ export default function CreateEventForm() {
     name: "ticketTypes",
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     // Here you would typically send the data to your API
     console.log(values);
 
@@ -164,6 +323,21 @@ export default function CreateEventForm() {
       ),
       duration: 5000, // Show for 5 seconds
     });
+
+    // Execute the createEvent function on the blockchain
+    try {
+      const eventAddress = await executeCreateEvent(
+        values.eventName,
+        values.nftCode,
+        values.eventStartDate.getTime() / 1000,
+        values.eventEndDate.getTime() / 1000,
+        values.ticketSaleStartDate.getTime() / 1000,
+        values.ticketSaleEndDate.getTime() / 1000
+      );
+      console.log("Event Address:", eventAddress);
+    } catch (error) {
+      console.error("Error creating event on blockchain:", error);
+    }
   }
 
   const handleImageChange = (
@@ -579,4 +753,92 @@ export default function CreateEventForm() {
       </Form>
     </div>
   );
+}
+
+const BASE_SEPOLIA_RPC_URL = process.env.NEXT_PUBLIC_BASE_SEPOLIA_RPC_URL!;
+const BASE_SEPOLIA_CHAIN_ID = parseInt(process.env.NEXT_PUBLIC_BASE_SEPOLIA_CHAIN_ID!);
+
+async function executeCreateEvent(
+  name: string,
+  nftSymbol: string,
+  start: number,
+  end: number,
+  startSale: number,
+  endSale: number
+) {
+  try {
+    // Ensure the Ethereum provider is available
+    if (!window.ethereum) {
+      throw new Error("Ethereum provider not found. Please install MetaMask.");
+    }
+
+    // Initialize the provider using ethers.BrowserProvider for MetaMask
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+
+    // Initialize the contract
+    const masterContract = new ethers.Contract(
+      MASTER_CONTRACT_ADDRESS,
+      MASTER_CONTRACT_ABI,
+      signer
+    );
+
+    // Execute the createEvent function
+    const tx = await masterContract.createEvent(
+      name,
+      nftSymbol,
+      start,
+      end,
+      startSale,
+      endSale
+    );
+
+    // Wait for the transaction to be mined
+    const receipt = await tx.wait();
+
+    // Retrieve the event address from the transaction receipt
+    const eventCreatedEvent = receipt.logs.find((log: ethers.Log) =>
+      log.topics[0] === ethers.id("EventCreated(address)")
+    );
+
+    if (!eventCreatedEvent) {
+      throw new Error("EventCreated event not found in transaction logs.");
+    }
+
+    const eventAddress = ethers.getAddress(
+      `0x${eventCreatedEvent.topics[1].slice(26)}`
+    );
+
+    console.log("Event Address:", eventAddress);
+
+    // Verify the event address on BaseScan
+    await verifyOnBaseScan(eventAddress);
+
+    return eventAddress;
+  } catch (error) {
+    console.error("Error creating event on blockchain:", error);
+    throw error;
+  }
+}
+
+async function verifyOnBaseScan(eventAddress: string) {
+  try {
+    const BASESCAN_API_KEY = process.env.NEXT_PUBLIC_BASESCAN_API_KEY!;
+    const BASESCAN_API_URL = `https://api.basescan.org/api`;
+
+    // Updated the action parameter to a valid value
+    const response = await fetch(
+      `${BASESCAN_API_URL}?module=contract&action=getsourcecode&address=${eventAddress}&apikey=${BASESCAN_API_KEY}`
+    );
+
+    const data = await response.json();
+
+    if (data.status === "1") {
+      console.log("Verification successful:", data.result);
+    } else {
+      console.error("Verification failed:", data.result);
+    }
+  } catch (error) {
+    console.error("Error verifying on BaseScan:", error);
+  }
 }
