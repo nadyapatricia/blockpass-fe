@@ -18,6 +18,7 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
+import CarouselBanner from "@/components/custom/carousel-banner";
 
 const contract = getContract({
   client,
@@ -45,6 +46,8 @@ export default function HomePage() {
         <h2 className="text-xl text-bold mb-2">Connect your wallet</h2>
         <ConnectButton client={client} />
       </div>
+
+      <CarouselBanner />
 
       {/* Search bar & Create button */}
       <div className="my-6 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
