@@ -47,7 +47,7 @@ export default function HomePage() {
         <ConnectButton client={client} />
       </div>
 
-      <CarouselBanner />
+      {/* <CarouselBanner /> */}
 
       {/* Search bar & Create button */}
       <div className="my-6 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
