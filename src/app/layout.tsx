@@ -21,11 +21,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={cn(inter.className, "container mx-auto p-4")}>
+      <body className={cn(inter.className)}>
         <ThirdwebProvider>
           <Header />
           <Toaster />
-          {children}
+          <div className="container mx-auto p-4">{children}</div>
         </ThirdwebProvider>
       </body>
     </html>
