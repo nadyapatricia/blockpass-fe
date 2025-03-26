@@ -811,8 +811,11 @@ async function executeCreateEvent(
 
     console.log("Event Address:", eventAddress);
 
-    // Verify the event address on BaseScan
-    await verifyOnBaseScan(eventAddress);
+    // Fetch the ABI of the created event contract
+    const eventABI = await fetchEventABI(eventAddress);
+
+    // Verify the event address and ABI on BaseScan
+    await verifyOnBaseScan(eventAddress, eventABI);
 
     return eventAddress;
   } catch (error) {
@@ -821,14 +824,41 @@ async function executeCreateEvent(
   }
 }
 
-async function verifyOnBaseScan(eventAddress: string) {
+async function fetchEventABI(eventAddress: string): Promise<string> {
+  try {
+    // Replace this with the actual logic to fetch the ABI of the created event
+    // For example, you might fetch it from your backend or a specific API
+    const response = await fetch(`/api/getEventABI?address=${eventAddress}`);
+    if (!response.ok) {
+      throw new Error("Failed to fetch event ABI");
+    }
+    const data = await response.json();
+    return data.abi;
+  } catch (error) {
+    console.error("Error fetching event ABI:", error);
+    throw error;
+  }
+}
+
+async function verifyOnBaseScan(eventAddress: string, eventABI: string) {
   try {
     const BASESCAN_API_KEY = process.env.NEXT_PUBLIC_BASESCAN_API_KEY!;
     const BASESCAN_API_URL = `https://api.basescan.org/api`;
 
-    // Updated the action parameter to a valid value
+    // Send the ABI and address for verification
     const response = await fetch(
-      `${BASESCAN_API_URL}?module=contract&action=getsourcecode&address=${eventAddress}&apikey=${BASESCAN_API_KEY}`
+      `${BASESCAN_API_URL}?module=contract&action=verifysourcecode`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          address: eventAddress,
+          abi: eventABI,
+          apikey: BASESCAN_API_KEY,
+        }),
+      }
     );
 
     const data = await response.json();
