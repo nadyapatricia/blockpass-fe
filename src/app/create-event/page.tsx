@@ -3,11 +3,11 @@
 import type React from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import * as z from "zod";
 import { format } from "date-fns";
-import { CalendarIcon, Upload } from "lucide-react";
-import { useState } from "react";
+import { CalendarIcon, Upload, Plus, Trash2 } from "lucide-react";
+import { useState, useRef } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -29,8 +29,21 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent } from "@/components/ui/card";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
+// Define the ticket type schema
+const ticketTypeSchema = z.object({
+  type: z.string().min(1, { message: "Ticket type is required" }),
+  price: z.coerce
+    .number()
+    .positive({ message: "Price must be a positive number" }),
+  supply: z.coerce
+    .number()
+    .int()
+    .positive({ message: "Supply must be a positive integer" }),
+});
 
 const formSchema = z
   .object({
@@ -55,8 +68,8 @@ const formSchema = z
     ticketSaleEndDate: z.date({
       required_error: "Ticket sale end date is required.",
     }),
-    ticketSupply: z.coerce.number().positive({
-      message: "Ticket supply must be a positive number.",
+    ticketTypes: z.array(ticketTypeSchema).min(1, {
+      message: "At least one ticket type is required",
     }),
     bannerImage: z
       .instanceof(File)
@@ -81,6 +94,7 @@ const formSchema = z
 export default function CreateEventForm() {
   const { toast } = useToast();
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -88,8 +102,14 @@ export default function CreateEventForm() {
       eventName: "",
       eventDescription: "",
       nftCode: "",
-      ticketSupply: 0,
+      ticketTypes: [{ type: "", price: 0, supply: 0 }], // Start with one empty ticket type
     },
+  });
+
+  // Set up field array for dynamic ticket types
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "ticketTypes",
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
@@ -104,6 +124,10 @@ export default function CreateEventForm() {
       ticketSaleStartDate: format(values.ticketSaleStartDate, "PPP"),
       ticketSaleEndDate: format(values.ticketSaleEndDate, "PPP"),
       bannerImage: values.bannerImage.name,
+      ticketTypes: values.ticketTypes.map(
+        (ticket) =>
+          `${ticket.type}: ${ticket.price} USDC (${ticket.supply} available)`
+      ),
     };
 
     // Create a formatted string of form values
@@ -113,6 +137,12 @@ export default function CreateEventForm() {
         const formattedKey = key
           .replace(/([A-Z])/g, " $1")
           .replace(/^./, (str) => str.toUpperCase());
+
+        if (key === "ticketTypes") {
+          return `${formattedKey}:\n${(value as string[])
+            .map((ticket) => `  - ${ticket}`)
+            .join("\n")}`;
+        }
 
         return `${formattedKey}: ${value}`;
       })
@@ -146,6 +176,13 @@ export default function CreateEventForm() {
         setImagePreview(reader.result as string);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  // Function to trigger file input click
+  const triggerFileInput = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
     }
   };
 
@@ -370,44 +407,140 @@ export default function CreateEventForm() {
             />
           </div>
 
-          <FormField
-            control={form.control}
-            name="ticketSupply"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Ticket Supply</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    placeholder="Enter number of tickets available"
-                    {...field}
-                  />
-                </FormControl>
-                <FormDescription>
-                  The total number of tickets available for this event.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
+          {/* Ticket Types Section */}
+          <div>
+            <FormLabel className="block mb-2">Ticket Types</FormLabel>
+            <FormDescription className="mb-4">
+              Add different ticket types, prices, and supply quantities.
+            </FormDescription>
+
+            <div className="space-y-4">
+              {fields.map((field, index) => (
+                <Card key={field.id} className="overflow-hidden">
+                  <CardContent className="p-4">
+                    <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-4 items-center">
+                      <FormField
+                        control={form.control}
+                        name={`ticketTypes.${index}.type`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className={index !== 0 ? "sr-only" : ""}>
+                              Ticket Type
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="e.g., VIP, Standard, Early Bird"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={`ticketTypes.${index}.price`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className={index !== 0 ? "sr-only" : ""}>
+                              Price (USDC)
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                placeholder="e.g., 100"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={`ticketTypes.${index}.supply`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className={index !== 0 ? "sr-only" : ""}>
+                              Supply
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                min="1"
+                                step="1"
+                                placeholder="e.g., 100"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Remove button */}
+                      {fields.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => remove(index)}
+                          className="h-10 w-10"
+                          aria-label="Remove ticket type"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="mt-2"
+              onClick={() => append({ type: "", price: 0, supply: 0 })}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add Ticket Type
+            </Button>
+
+            {form.formState.errors.ticketTypes?.root && (
+              <p className="text-sm font-medium text-destructive mt-2">
+                {form.formState.errors.ticketTypes.root.message}
+              </p>
             )}
-          />
+          </div>
 
           <FormField
             control={form.control}
             name="bannerImage"
-            render={({ field: { value, onChange, ...field } }) => (
+            render={({ field: { value, onChange, ref, ...field } }) => (
               <FormItem>
                 <FormLabel>Banner Image</FormLabel>
                 <FormControl>
                   <div className="space-y-4">
                     <div className="flex items-center gap-4">
                       <Input
+                        ref={fileInputRef}
                         type="file"
                         accept="image/*"
                         {...field}
                         onChange={(e) => handleImageChange(e, onChange)}
                         className="flex-1"
                       />
-                      <Button type="button" variant="outline" size="icon">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={triggerFileInput}
+                        aria-label="Upload image"
+                      >
                         <Upload className="h-4 w-4" />
                       </Button>
                     </div>
