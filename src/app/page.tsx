@@ -63,7 +63,7 @@ export default function HomePage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {data?.map((event, index) => (
-            <Card className="transition-shadow hover:shadow-lg">
+            <Card key={index} className="transition-shadow hover:shadow-lg">
               <CardHeader>
                 <CardTitle>{index}</CardTitle>
                 <CardDescription>{event}</CardDescription>
