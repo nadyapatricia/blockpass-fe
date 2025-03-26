@@ -814,6 +814,9 @@ async function executeCreateEvent(
     // Fetch the ABI of the created event contract
     const eventABI = await fetchEventABI(eventAddress);
 
+    // Log the ABI for debugging
+    console.log("Event ABI:", eventABI);
+
     // Verify the event address and ABI on BaseScan
     await verifyOnBaseScan(eventAddress, eventABI);
 
@@ -826,16 +829,19 @@ async function executeCreateEvent(
 
 async function fetchEventABI(eventAddress: string): Promise<string> {
   try {
-    // Replace this with the actual logic to fetch the ABI of the created event
-    // For example, you might fetch it from your backend or a specific API
+    console.log("Calling /api/getEventABI for address:", eventAddress); // Debugging log
+
     const response = await fetch(`/api/getEventABI?address=${eventAddress}`);
     if (!response.ok) {
+      console.error("Failed to fetch event ABI, status:", response.status); // Debugging log
       throw new Error("Failed to fetch event ABI");
     }
+
     const data = await response.json();
+    console.log("Event ABI fetched successfully:", data.abi); // Debugging log
     return data.abi;
   } catch (error) {
-    console.error("Error fetching event ABI:", error);
+    console.error("Error fetching event ABI:", error); // Debugging log
     throw error;
   }
 }
