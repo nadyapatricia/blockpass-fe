@@ -40,8 +40,11 @@ export default function HomePage() {
   console.log(data, "getAllEvents");
 
   return (
-    <main className="">
-      <ConnectButton client={client} />
+    <main>
+      <div className="justify-center flex flex-col items-center mb-12">
+        <h2 className="text-xl text-bold mb-2">Connect your wallet</h2>
+        <ConnectButton client={client} />
+      </div>
 
       {/* Search bar & Create button */}
       <div className="my-6 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
