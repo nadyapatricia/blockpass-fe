@@ -811,70 +811,9 @@ async function executeCreateEvent(
 
     console.log("Event Address:", eventAddress);
 
-    // Fetch the ABI of the created event contract
-    const eventABI = await fetchEventABI(eventAddress);
-
-    // Log the ABI for debugging
-    console.log("Event ABI:", eventABI);
-
-    // Verify the event address and ABI on BaseScan
-    await verifyOnBaseScan(eventAddress, eventABI);
-
     return eventAddress;
   } catch (error) {
     console.error("Error creating event on blockchain:", error);
     throw error;
-  }
-}
-
-async function fetchEventABI(eventAddress: string): Promise<string> {
-  try {
-    console.log("Calling /api/getEventABI for address:", eventAddress); // Debugging log
-
-    const response = await fetch(`/api/getEventABI?address=${eventAddress}`);
-    if (!response.ok) {
-      console.error("Failed to fetch event ABI, status:", response.status); // Debugging log
-      throw new Error("Failed to fetch event ABI");
-    }
-
-    const data = await response.json();
-    console.log("Event ABI fetched successfully:", data.abi); // Debugging log
-    return data.abi;
-  } catch (error) {
-    console.error("Error fetching event ABI:", error); // Debugging log
-    throw error;
-  }
-}
-
-async function verifyOnBaseScan(eventAddress: string, eventABI: string) {
-  try {
-    const BASESCAN_API_KEY = process.env.NEXT_PUBLIC_BASESCAN_API_KEY!;
-    const BASESCAN_API_URL = `https://api.basescan.org/api`;
-
-    // Send the ABI and address for verification
-    const response = await fetch(
-      `${BASESCAN_API_URL}?module=contract&action=verifysourcecode`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          address: eventAddress,
-          abi: eventABI,
-          apikey: BASESCAN_API_KEY,
-        }),
-      }
-    );
-
-    const data = await response.json();
-
-    if (data.status === "1") {
-      console.log("Verification successful:", data.result);
-    } else {
-      console.error("Verification failed:", data.result);
-    }
-  } catch (error) {
-    console.error("Error verifying on BaseScan:", error);
   }
 }
