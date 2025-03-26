@@ -38,7 +38,12 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 const MASTER_CONTRACT_ADDRESS = "0x10e296eaf59d063ab26412892803a025d83a3d5b"; // Replace with the actual address
 const MASTER_CONTRACT_ABI: Array<{
-  inputs?: Array<{ internalType: string; name: string; type: string; indexed?: boolean }>;
+  inputs?: Array<{
+    internalType: string;
+    name: string;
+    type: string;
+    indexed?: boolean;
+  }>;
   name?: string;
   outputs?: Array<{ internalType: string; name: string; type: string }>;
   stateMutability?: string;
@@ -46,146 +51,147 @@ const MASTER_CONTRACT_ABI: Array<{
   anonymous?: boolean; // Added `anonymous` property
 }> = [
   {
-    "inputs": [
-      { "internalType": "address", "name": "_treasuryContract", "type": "address" },
-      { "internalType": "address", "name": "_usdc_token", "type": "address" },
-      { "internalType": "address", "name": "_ownerModifierAddress", "type": "address" }
+    inputs: [
+      { internalType: "address", name: "_treasuryContract", type: "address" },
+      { internalType: "address", name: "_usdc_token", type: "address" },
+      {
+        internalType: "address",
+        name: "_ownerModifierAddress",
+        type: "address",
+      },
     ],
-    "stateMutability": "nonpayable",
-    "type": "constructor"
+    stateMutability: "nonpayable",
+    type: "constructor",
   },
   {
-    "inputs": [],
-    "name": "InsufficientBalance",
-    "type": "error"
+    inputs: [],
+    name: "InsufficientBalance",
+    type: "error",
   },
   {
-    "inputs": [],
-    "name": "InvalidEventTiming",
-    "type": "error"
+    inputs: [],
+    name: "InvalidEventTiming",
+    type: "error",
   },
   {
-    "inputs": [],
-    "name": "InvalidSaleTiming",
-    "type": "error"
+    inputs: [],
+    name: "InvalidSaleTiming",
+    type: "error",
   },
   {
-    "inputs": [],
-    "name": "InvalidTicketData",
-    "type": "error"
+    inputs: [],
+    name: "InvalidTicketData",
+    type: "error",
   },
   {
-    "inputs": [],
-    "name": "NotOwner",
-    "type": "error"
+    inputs: [],
+    name: "NotOwner",
+    type: "error",
   },
   {
-    "inputs": [],
-    "name": "TransferFail",
-    "type": "error"
+    inputs: [],
+    name: "TransferFail",
+    type: "error",
   },
   {
-    "anonymous": false,
-    "inputs": [
-      { "indexed": true, "internalType": "address", "name": "eventAddress", "type": "address" }
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "eventAddress",
+        type: "address",
+      },
     ],
-    "name": "EventCreated",
-    "type": "event"
+    name: "EventCreated",
+    type: "event",
   },
   {
-    "anonymous": false,
-    "inputs": [
-      { "indexed": true, "internalType": "address", "name": "owner", "type": "address" },
-      { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "owner",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
+      },
     ],
-    "name": "FundsWithdrawn",
-    "type": "event"
+    name: "FundsWithdrawn",
+    type: "event",
   },
   {
-    "inputs": [
-      { "internalType": "string", "name": "_name", "type": "string" },
-      { "internalType": "string", "name": "_nftSymbol", "type": "string" },
-      { "internalType": "uint256", "name": "_start", "type": "uint256" },
-      { "internalType": "uint256", "name": "_end", "type": "uint256" },
-      { "internalType": "uint256", "name": "_startSale", "type": "uint256" },
-      { "internalType": "uint256", "name": "_endSale", "type": "uint256" }
+    inputs: [
+      { internalType: "string", name: "_name", type: "string" },
+      { internalType: "string", name: "_nftSymbol", type: "string" },
+      { internalType: "uint256", name: "_start", type: "uint256" },
+      { internalType: "uint256", name: "_end", type: "uint256" },
+      { internalType: "uint256", name: "_startSale", type: "uint256" },
+      { internalType: "uint256", name: "_endSale", type: "uint256" },
     ],
-    "name": "createEvent",
-    "outputs": [
-      { "internalType": "address", "name": "", "type": "address" }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
+    name: "createEvent",
+    outputs: [{ internalType: "address", name: "", type: "address" }],
+    stateMutability: "nonpayable",
+    type: "function",
   },
   {
-    "inputs": [
-      { "internalType": "uint256", "name": "", "type": "uint256" }
-    ],
-    "name": "eventContracts",
-    "outputs": [
-      { "internalType": "address", "name": "", "type": "address" }
-    ],
-    "stateMutability": "view",
-    "type": "function"
+    inputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    name: "eventContracts",
+    outputs: [{ internalType: "address", name: "", type: "address" }],
+    stateMutability: "view",
+    type: "function",
   },
   {
-    "inputs": [],
-    "name": "eventCount",
-    "outputs": [
-      { "internalType": "uint256", "name": "", "type": "uint256" }
-    ],
-    "stateMutability": "view",
-    "type": "function"
+    inputs: [],
+    name: "eventCount",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
   },
   {
-    "inputs": [],
-    "name": "getAllEvents",
-    "outputs": [
-      { "internalType": "address[]", "name": "", "type": "address[]" }
-    ],
-    "stateMutability": "view",
-    "type": "function"
+    inputs: [],
+    name: "getAllEvents",
+    outputs: [{ internalType: "address[]", name: "", type: "address[]" }],
+    stateMutability: "view",
+    type: "function",
   },
   {
-    "inputs": [],
-    "name": "masterOwnerModifier",
-    "outputs": [
-      { "internalType": "address", "name": "", "type": "address" }
-    ],
-    "stateMutability": "view",
-    "type": "function"
+    inputs: [],
+    name: "masterOwnerModifier",
+    outputs: [{ internalType: "address", name: "", type: "address" }],
+    stateMutability: "view",
+    type: "function",
   },
   {
-    "inputs": [],
-    "name": "treasuryContract",
-    "outputs": [
-      { "internalType": "address", "name": "", "type": "address" }
-    ],
-    "stateMutability": "view",
-    "type": "function"
+    inputs: [],
+    name: "treasuryContract",
+    outputs: [{ internalType: "address", name: "", type: "address" }],
+    stateMutability: "view",
+    type: "function",
   },
   {
-    "inputs": [],
-    "name": "usdc_token",
-    "outputs": [
-      { "internalType": "address", "name": "", "type": "address" }
-    ],
-    "stateMutability": "view",
-    "type": "function"
+    inputs: [],
+    name: "usdc_token",
+    outputs: [{ internalType: "address", name: "", type: "address" }],
+    stateMutability: "view",
+    type: "function",
   },
   {
-    "inputs": [
-      { "internalType": "uint256", "name": "amount", "type": "uint256" }
-    ],
-    "name": "withdraw",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
+    inputs: [{ internalType: "uint256", name: "amount", type: "uint256" }],
+    name: "withdraw",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
   },
   {
-    "stateMutability": "payable",
-    "type": "receive"
-  }
+    stateMutability: "payable",
+    type: "receive",
+  },
 ];
 
 declare global {
@@ -274,7 +280,6 @@ export default function CreateEventForm() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    // Here you would typically send the data to your API
     console.log(values);
 
     // Format dates for display in toast
@@ -294,7 +299,6 @@ export default function CreateEventForm() {
     // Create a formatted string of form values
     const formattedDetails = Object.entries(formattedValues)
       .map(([key, value]) => {
-        // Convert camelCase to Title Case with spaces
         const formattedKey = key
           .replace(/([A-Z])/g, " $1")
           .replace(/^./, (str) => str.toUpperCase());
@@ -321,7 +325,7 @@ export default function CreateEventForm() {
           </pre>
         </div>
       ),
-      duration: 5000, // Show for 5 seconds
+      duration: 5000,
     });
 
     // Execute the createEvent function on the blockchain
@@ -335,6 +339,71 @@ export default function CreateEventForm() {
         values.ticketSaleEndDate.getTime() / 1000
       );
       console.log("Event Address:", eventAddress);
+
+      try {
+        // Ensure the Ethereum provider is available
+        if (!window.ethereum) {
+          throw new Error(
+            "Ethereum provider not found. Please install MetaMask."
+          );
+        }
+
+        // Initialize the provider using ethers.BrowserProvider for MetaMask
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const signer = await provider.getSigner();
+
+        // Initialize the event contract using the eventAddress
+        const eventContract = new ethers.Contract(
+          eventAddress,
+          [
+            {
+              inputs: [
+                {
+                  internalType: "string[]",
+                  name: "_ticketTypes",
+                  type: "string[]",
+                },
+                {
+                  internalType: "uint256[]",
+                  name: "_prices",
+                  type: "uint256[]",
+                },
+                {
+                  internalType: "uint256[]",
+                  name: "_maxSupplies",
+                  type: "uint256[]",
+                },
+              ],
+              name: "addTickets",
+              outputs: [],
+              stateMutability: "nonpayable",
+              type: "function",
+            },
+          ],
+          signer
+        );
+
+        // Extract ticket details from form values
+        const ticketTypes = values.ticketTypes.map((ticket) => ticket.type);
+        const prices = values.ticketTypes.map(
+          (ticket) => ethers.parseUnits(ticket.price.toString(), 6) // Assuming USDC with 6 decimals
+        );
+        const maxSupplies = values.ticketTypes.map((ticket) => ticket.supply);
+
+        // Call the addTickets function
+        const tx = await eventContract.addTickets(
+          ticketTypes,
+          prices,
+          maxSupplies
+        );
+
+        // Wait for the transaction to be mined
+        const receipt = await tx.wait();
+
+        console.log("Tickets added successfully:", receipt);
+      } catch (error) {
+        console.error("Error adding tickets:", error);
+      }
     } catch (error) {
       console.error("Error creating event on blockchain:", error);
     }
@@ -755,9 +824,6 @@ export default function CreateEventForm() {
   );
 }
 
-const BASE_SEPOLIA_RPC_URL = process.env.NEXT_PUBLIC_BASE_SEPOLIA_RPC_URL!;
-const BASE_SEPOLIA_CHAIN_ID = parseInt(process.env.NEXT_PUBLIC_BASE_SEPOLIA_CHAIN_ID!);
-
 async function executeCreateEvent(
   name: string,
   nftSymbol: string,
@@ -797,8 +863,8 @@ async function executeCreateEvent(
     const receipt = await tx.wait();
 
     // Retrieve the event address from the transaction receipt
-    const eventCreatedEvent = receipt.logs.find((log: ethers.Log) =>
-      log.topics[0] === ethers.id("EventCreated(address)")
+    const eventCreatedEvent = receipt.logs.find(
+      (log: ethers.Log) => log.topics[0] === ethers.id("EventCreated(address)")
     );
 
     if (!eventCreatedEvent) {
