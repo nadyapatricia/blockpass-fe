@@ -7,7 +7,7 @@ import { ethers } from "ethers"; // Import ethers
 import { client } from "./client";
 
 import { ConnectButton } from "thirdweb/react";
-import { getContract, readContract } from "thirdweb";
+import { getContract } from "thirdweb";
 import { baseSepolia } from "thirdweb/chains";
 import { useReadContract } from "thirdweb/react";
 
@@ -51,7 +51,7 @@ export default function HomePage() {
         const details = await Promise.all(
           data.map(async (eventAddress: string) => {
             // Use ethers.js to create a contract instance
-            const provider = new ethers.providers.JsonRpcProvider(
+            const provider = new ethers.JsonRpcProvider(
               "https://base-sepolia.g.alchemy.com/v2/rUkR8zbPWCVxMa6moNb6PBmyHPlVj_6m"
             );
             const eventContract = new ethers.Contract(
