@@ -18,12 +18,12 @@ export default function Header() {
         />
       </div>
 
-      {/* Right side: “My tickets” link */}
+      {/* Right side: “My account” link */}
       <Link
-        href="/my-tickets"
-        className="text-bpGreen font-bold text-lg hover:underline"
+        href="/my-account"
+        className="text-bpGreen font-bold mr-6 text-lg hover:underline"
       >
-        My tickets
+        My account
       </Link>
     </header>
   );

@@ -1,5 +1,7 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 import { client } from "./client";
 
 import { ConnectButton } from "thirdweb/react";
@@ -16,17 +18,6 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
-import Header from "@/components/ui/header";
-
-// Example placeholder event data
-const events = [
-  { id: 1, title: "Blockchain Summit", desc: "Learn about blockchain tech" },
-  { id: 2, title: "Crypto Expo", desc: "The biggest crypto event in town" },
-  { id: 3, title: "NFT Meetup", desc: "All about NFTs and digital art" },
-  { id: 4, title: "Web3 Conference", desc: "Decentralized future is here" },
-  { id: 5, title: "Dev meetup", desc: "Dinner and chit-chat sesh for devs" },
-  { id: 6, title: "Hackaton 2025", desc: "Biggest Hackaton for Solidity devs" },
-];
 
 const contract = getContract({
   client,
@@ -35,6 +26,8 @@ const contract = getContract({
 });
 
 export default function HomePage() {
+  const router = useRouter();
+
   const { data, isLoading, error } = useReadContract({
     contract,
     method: "function getAllEvents() external view returns (address[] memory)",
@@ -47,9 +40,7 @@ export default function HomePage() {
   console.log(data, "getAllEvents");
 
   return (
-    <main className="container mx-auto p-4">
-      <Header />
-
+    <main className="">
       <ConnectButton client={client} />
 
       {/* Search bar & Create button */}
@@ -59,7 +50,12 @@ export default function HomePage() {
           placeholder="Search events..."
           className="w-full max-w-sm"
         />
-        <Button className="whitespace-nowrap">Create Event</Button>
+        <Button
+          className="whitespace-nowrap"
+          onClick={() => router.push("/create-event")}
+        >
+          Create Event
+        </Button>
       </div>
 
       {isLoading ? (
