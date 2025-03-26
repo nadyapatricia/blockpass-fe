@@ -1,15 +1,21 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { CircleUserRound } from "lucide-react";
 import blockpassLogo from "@public/blockpass-logo.png";
 
 export default function Header() {
+  const router = useRouter();
+
   return (
     <header className="bg-gradient-to-r from-[#9120AC] to-[#DE35A0] p-6 flex justify-between items-center">
       {/* Left side: Logo */}
-      <div className="flex items-center space-x-3">
+      <div
+        className="flex items-center space-x-3"
+        onClick={() => router.push("/")}
+      >
         <Image
           src={blockpassLogo}
           alt="blockpass logo"
