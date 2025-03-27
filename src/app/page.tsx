@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ethers } from "ethers"; // Import ethers
+import { useToast } from "@/hooks/use-toast";
 
 import { client } from "./client";
 
@@ -44,6 +45,122 @@ export default function HomePage() {
     contract,
     method: "function getAllEvents() external view returns (address[] memory)",
   });
+  const { toast } = useToast();
+
+  const handleMintTicket = async (eventAddress: string, ticketType: string) => {
+    try {
+      if (!window.ethereum) {
+        throw new Error(
+          "Ethereum provider not found. Please install MetaMask."
+        );
+      }
+
+      // Initialize ethers.js provider and signer
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+
+      // USDC token contract address (replace with the actual USDC token address)
+      const usdcTokenAddress = "0x036CbD53842c5426634e7929541eC2318f3dCF7e"; // USDC on Base Sepolia Testnet
+      const usdcToken = new ethers.Contract(
+        usdcTokenAddress,
+        [
+          {
+            inputs: [
+              { internalType: "address", name: "spender", type: "address" },
+              { internalType: "uint256", name: "amount", type: "uint256" },
+            ],
+            name: "approve",
+            outputs: [{ internalType: "bool", name: "", type: "bool" }],
+            stateMutability: "nonpayable",
+            type: "function",
+          },
+        ],
+        signer
+      );
+
+      // Approve the event contract to spend the required amount of USDC
+      const ticketPrice = ethers.parseUnits("100", 6); // Replace "100" with the actual ticket price in USDC
+      const approveTx = await usdcToken.approve(eventAddress, ticketPrice);
+
+      // Wait for the approval transaction to be mined
+      await approveTx.wait();
+      console.log("USDC approved successfully!");
+
+      // Initialize the event contract
+      const eventContract = new ethers.Contract(
+        eventAddress,
+        [
+          {
+            inputs: [
+              { internalType: "string", name: "_ticketType", type: "string" },
+            ],
+            name: "mintTicket",
+            outputs: [],
+            stateMutability: "nonpayable",
+            type: "function",
+          },
+          {
+            anonymous: false,
+            inputs: [
+              {
+                indexed: true,
+                internalType: "address",
+                name: "buyer",
+                type: "address",
+              },
+              {
+                indexed: false,
+                internalType: "string",
+                name: "ticketType",
+                type: "string",
+              },
+              {
+                indexed: false,
+                internalType: "uint256",
+                name: "tokenId",
+                type: "uint256",
+              },
+            ],
+            name: "TicketMinted",
+            type: "event",
+          },
+        ],
+        signer
+      );
+
+      // Listen for the TicketMinted event
+      eventContract.on("TicketMinted", (buyer, ticketType, tokenId) => {
+        console.log("TicketMinted event:", { buyer, ticketType, tokenId });
+
+        // Show a toast notification when the event is emitted
+        toast({
+          title: "Ticket Minted!",
+          description: `You successfully minted a ${ticketType} ticket. Token ID: ${tokenId}`,
+          duration: 10000,
+        });
+
+        // Remove the event listener after it's triggered
+        eventContract.removeAllListeners("TicketMinted");
+      });
+
+      // Call the mintTicket function
+      const tx = await eventContract.mintTicket(ticketType);
+
+      // Wait for the transaction to be mined
+      await tx.wait();
+
+      console.log("Ticket minted successfully!");
+    } catch (error) {
+      console.error("Error minting ticket:", error);
+
+      // Show an error toast
+      toast({
+        title: "Error",
+        description: "Failed to mint the ticket. Please try again.",
+        duration: 5000,
+      });
+    }
+  };
 
   useEffect(() => {
     const fetchEventDetails = async () => {
@@ -192,7 +309,12 @@ export default function HomePage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button variant="outline">View Details</Button>
+                <Button
+                  variant="outline"
+                  onClick={() => handleMintTicket(event.address, "VIP")} // Replace "VIP" with the desired ticket type
+                >
+                  Mint ticket
+                </Button>
               </CardContent>
             </Card>
           ))}
