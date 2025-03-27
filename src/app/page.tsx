@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ethers } from "ethers"; // Import ethers
+import { ethers } from "ethers";
 
 import { client } from "./client";
 
@@ -40,17 +40,20 @@ const contract = getContract({
 export default function HomePage() {
   const router = useRouter();
   const [eventDetails, setEventDetails] = useState<EventDetail[]>([]);
-  const { data, isLoading, error } = useReadContract({
+  const [visibleCount, setVisibleCount] = useState(8);
+  const [loading, setLoading] = useState(true); // New loading state
+
+  const { data, error } = useReadContract({
     contract,
     method: "function getAllEvents() external view returns (address[] memory)",
   });
 
   useEffect(() => {
     const fetchEventDetails = async () => {
+      setLoading(true); // Set loading to true before fetching
       if (data) {
         const details = await Promise.all(
           data.map(async (eventAddress: string) => {
-            // Use ethers.js to create a contract instance
             const provider = new ethers.JsonRpcProvider(
               "https://base-sepolia.g.alchemy.com/v2/rUkR8zbPWCVxMa6moNb6PBmyHPlVj_6m"
             );
@@ -116,7 +119,6 @@ export default function HomePage() {
             );
 
             try {
-              // Use ethers.js to call the contract methods
               const name = await eventContract.eventName();
               const start = await eventContract.eventStart();
               const end = await eventContract.eventEnd();
@@ -140,10 +142,14 @@ export default function HomePage() {
           })
         );
 
-        setEventDetails(
-          details.filter((detail) => detail !== null) as EventDetail[]
-        );
+        // Filter out any null responses
+        const filteredDetails = details.filter(
+          (detail) => detail !== null
+        ) as EventDetail[];
+        // Reverse the array so that the latest created event appears first
+        setEventDetails(filteredDetails.reverse());
       }
+      setLoading(false); // Set loading to false after fetching
     };
 
     fetchEventDetails();
@@ -152,6 +158,10 @@ export default function HomePage() {
   if (error) {
     console.error("Error reading contract:", error);
   }
+
+  const showMoreEvents = () => {
+    setVisibleCount((prevCount) => prevCount + 8);
+  };
 
   return (
     <main>
@@ -175,28 +185,37 @@ export default function HomePage() {
         </Button>
       </div>
 
-      {isLoading ? (
-        <p>Loading events..</p>
+      {loading ? ( // Use the new loading state
+        <p>Loading events...</p>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {eventDetails.map((event, index) => (
-            <Card key={index} className="transition-shadow hover:shadow-lg">
-              <CardHeader>
-                <CardTitle>{event.name}</CardTitle>
-                <CardDescription>
-                  <p>Symbol: {event.nftSymbol}</p>
-                  <p>Start: {event.start}</p>
-                  <p>End: {event.end}</p>
-                  <p>Sale Start: {event.startSale}</p>
-                  <p>Sale End: {event.endSale}</p>
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button variant="outline">View Details</Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <>
+          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            {eventDetails.slice(0, visibleCount).map((event, index) => (
+              <Card key={index} className="transition-shadow hover:shadow-lg">
+                <CardHeader>
+                  <CardTitle>{event.name}</CardTitle>
+                  <CardDescription>
+                    <p>Symbol: {event.nftSymbol}</p>
+                    <p>Start: {event.start}</p>
+                    <p>End: {event.end}</p>
+                    <p>Sale Start: {event.startSale}</p>
+                    <p>Sale End: {event.endSale}</p>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button variant="outline">View Details</Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          {visibleCount < eventDetails.length && (
+            <div className="mt-7 flex justify-center">
+              <Button onClick={showMoreEvents} variant="link">
+                Show more events
+              </Button>
+            </div>
+          )}
+        </>
       )}
     </main>
   );
