@@ -3,6 +3,7 @@
 import type React from "react";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray } from "react-hook-form";
@@ -30,9 +31,11 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { ToastAction } from "@/components/ui/toast";
+import { Card, CardContent } from "@/components/ui/card";
+
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { Card, CardContent } from "@/components/ui/card";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
@@ -259,6 +262,7 @@ const formSchema = z
   });
 
 export default function CreateEventForm() {
+  const router = useRouter();
   const { toast } = useToast();
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -314,12 +318,10 @@ export default function CreateEventForm() {
       .join("\n");
 
     toast({
-      title: "Event created successfully!",
+      title: "We're creating your event...",
       description: (
         <div className="mt-2 max-h-[200px] overflow-y-auto text-sm">
-          <p className="mb-2">
-            Your event has been created with the following details:
-          </p>
+          <p className="mb-2">Your event details:</p>
           <pre className="whitespace-pre-wrap rounded bg-slate-100 p-2 dark:bg-slate-800">
             {formattedDetails}
           </pre>
@@ -401,6 +403,17 @@ export default function CreateEventForm() {
         const receipt = await tx.wait();
 
         console.log("Tickets added successfully:", receipt);
+
+        toast({
+          title: "Event created successfully!",
+          description: "You can view your event on the home page.",
+          action: (
+            <ToastAction altText="Go to home" onClick={() => router.push("/")}>
+              Go to home
+            </ToastAction>
+          ),
+          duration: 15000,
+        });
       } catch (error) {
         console.error("Error adding tickets:", error);
       }
