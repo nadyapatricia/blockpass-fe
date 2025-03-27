@@ -41,14 +41,16 @@ export default function HomePage() {
   const router = useRouter();
   const [eventDetails, setEventDetails] = useState<EventDetail[]>([]);
   const [visibleCount, setVisibleCount] = useState(8);
+  const [loading, setLoading] = useState(true); // New loading state
 
-  const { data, isLoading, error } = useReadContract({
+  const { data, error } = useReadContract({
     contract,
     method: "function getAllEvents() external view returns (address[] memory)",
   });
 
   useEffect(() => {
     const fetchEventDetails = async () => {
+      setLoading(true); // Set loading to true before fetching
       if (data) {
         const details = await Promise.all(
           data.map(async (eventAddress: string) => {
@@ -147,6 +149,7 @@ export default function HomePage() {
         // Reverse the array so that the latest created event appears first
         setEventDetails(filteredDetails.reverse());
       }
+      setLoading(false); // Set loading to false after fetching
     };
 
     fetchEventDetails();
@@ -182,8 +185,8 @@ export default function HomePage() {
         </Button>
       </div>
 
-      {isLoading ? (
-        <p>Loading events..</p>
+      {loading ? ( // Use the new loading state
+        <p>Loading events...</p>
       ) : (
         <>
           <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
