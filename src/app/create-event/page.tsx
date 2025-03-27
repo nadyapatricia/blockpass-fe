@@ -342,6 +342,13 @@ export default function CreateEventForm() {
       );
       console.log("Event Address:", eventAddress);
 
+      toast({
+        title:
+          "You will be prompted to sign another transaction to add your event's tickets",
+        description: "Please approve in order to complete the event creation.",
+        duration: 20000,
+      });
+
       try {
         // Ensure the Ethereum provider is available
         if (!window.ethereum) {
