@@ -212,8 +212,10 @@ export default function HomePage() {
             ))}
           </div>
           {visibleCount < eventDetails.length && (
-            <div className="mt-4 flex justify-center">
-              <Button onClick={showMoreEvents}>Show more events</Button>
+            <div className="mt-7 flex justify-center">
+              <Button onClick={showMoreEvents} variant="link">
+                Show more events
+              </Button>
             </div>
           )}
         </>
