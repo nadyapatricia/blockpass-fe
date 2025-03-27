@@ -30,6 +30,7 @@ type EventDetail = {
   startSale: string;
   endSale: string;
   nftSymbol: string;
+  ticketTypes: { type: string; price: string }[]; // Add ticketTypes
 };
 
 const contract = getContract({
@@ -167,7 +168,6 @@ export default function HomePage() {
       if (data) {
         const details = await Promise.all(
           data.map(async (eventAddress: string) => {
-            // Use ethers.js to create a contract instance
             const provider = new ethers.JsonRpcProvider(
               "https://base-sepolia.g.alchemy.com/v2/rUkR8zbPWCVxMa6moNb6PBmyHPlVj_6m"
             );
@@ -228,18 +228,66 @@ export default function HomePage() {
                   stateMutability: "view",
                   type: "function",
                 },
+                {
+                  inputs: [],
+                  name: "getTicketDetails",
+                  outputs: [
+                    {
+                      internalType: "string[]",
+                      name: "ticketTypeNames",
+                      type: "string[]",
+                    },
+                    {
+                      internalType: "uint256[]",
+                      name: "prices",
+                      type: "uint256[]",
+                    },
+                    {
+                      internalType: "uint256[]",
+                      name: "supplies",
+                      type: "uint256[]",
+                    },
+                  ],
+                  stateMutability: "view",
+                  type: "function",
+                },
               ],
               provider
             );
 
             try {
-              // Use ethers.js to call the contract methods
+              // Fetch event details
               const name = await eventContract.eventName();
               const start = await eventContract.eventStart();
               const end = await eventContract.eventEnd();
               const startSale = await eventContract.eventTiketStartSale();
               const endSale = await eventContract.eventTiketEndSale();
               const nftSymbol = await eventContract.symbol();
+
+              // Fetch ticket details
+              const ticketDetails = await eventContract.getTicketDetails();
+              console.log("Raw Ticket Details:", ticketDetails);
+
+              // Convert Result objects to plain arrays with explicit type casting
+              const ticketTypeNames = Array.from(
+                ticketDetails.ticketTypeNames
+              ) as string[];
+              const prices = Array.from(ticketDetails.prices) as bigint[];
+              const supplies = Array.from(ticketDetails.supplies) as bigint[];
+
+              console.log("Parsed Ticket Details:", {
+                ticketTypeNames,
+                prices,
+                supplies,
+              });
+
+              // Map ticket types and prices
+              const ticketTypes = ticketTypeNames.map(
+                (type: string, index: number) => ({
+                  type,
+                  price: ethers.formatUnits(prices[index], 6), // Format price from smallest unit
+                })
+              );
 
               return {
                 address: eventAddress,
@@ -249,6 +297,7 @@ export default function HomePage() {
                 startSale: new Date(Number(startSale) * 1000).toLocaleString(),
                 endSale: new Date(Number(endSale) * 1000).toLocaleString(),
                 nftSymbol: String(nftSymbol),
+                ticketTypes, // Include ticket types
               };
             } catch (err) {
               console.error(`Error fetching details for ${eventAddress}:`, err);
@@ -309,12 +358,21 @@ export default function HomePage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button
-                  variant="outline"
-                  onClick={() => handleMintTicket(event.address, "VIP")} // Replace "VIP" with the desired ticket type
-                >
-                  Mint ticket
-                </Button>
+                {event.ticketTypes.map((ticket, idx) => (
+                  <div key={idx} className="mb-4">
+                    <p>
+                      Ticket Type: {ticket.type} - Price: {ticket.price} USDC
+                    </p>
+                    <Button
+                      variant="outline"
+                      onClick={() =>
+                        handleMintTicket(event.address, ticket.type)
+                      }
+                    >
+                      Mint {ticket.type} Ticket
+                    </Button>
+                  </div>
+                ))}
               </CardContent>
             </Card>
           ))}
