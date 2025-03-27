@@ -34,7 +34,7 @@ type EventDetail = {
 
 const contract = getContract({
   client,
-  address: "0x10e296eAf59D063Ab26412892803A025d83a3D5B",
+  address: "0xB3F43A6c0da22743eaF716BEF85A36776566969D",
   chain: baseSepolia,
 });
 
