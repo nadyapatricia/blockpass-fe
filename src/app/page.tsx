@@ -42,6 +42,7 @@ export default function HomePage() {
   const [eventDetails, setEventDetails] = useState<EventDetail[]>([]);
   const [visibleCount, setVisibleCount] = useState(8);
   const [loading, setLoading] = useState(true); // New loading state
+  const [searchQuery, setSearchQuery] = useState(""); // State for search query
 
   const { data, error } = useReadContract({
     contract,
@@ -163,6 +164,13 @@ export default function HomePage() {
     setVisibleCount((prevCount) => prevCount + 8);
   };
 
+  // Filter events based on the search query
+  const filteredEvents = eventDetails.filter(
+    (event) =>
+      event.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      event.nftSymbol.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <main>
       <div className="justify-center flex flex-col items-center mb-12 mt-4">
@@ -176,6 +184,8 @@ export default function HomePage() {
           type="text"
           placeholder="Search events..."
           className="w-full max-w-sm"
+          value={searchQuery} // Bind the search query state
+          onChange={(e) => setSearchQuery(e.target.value)} // Update the search query state
         />
         <Button
           className="whitespace-nowrap"
@@ -190,7 +200,7 @@ export default function HomePage() {
       ) : (
         <>
           <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-            {eventDetails.slice(0, visibleCount).map((event, index) => (
+            {filteredEvents.slice(0, visibleCount).map((event, index) => (
               <Card key={index} className="transition-shadow hover:shadow-lg">
                 <CardHeader>
                   <CardTitle>{event.name}</CardTitle>
@@ -208,7 +218,7 @@ export default function HomePage() {
               </Card>
             ))}
           </div>
-          {visibleCount < eventDetails.length && (
+          {visibleCount < filteredEvents.length && (
             <div className="mt-7 flex justify-center">
               <Button onClick={showMoreEvents} variant="link">
                 Show more events
