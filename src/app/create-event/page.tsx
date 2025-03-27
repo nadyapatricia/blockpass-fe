@@ -300,37 +300,19 @@ export default function CreateEventForm() {
       ),
     };
 
-    // Create a formatted string of form values
-    const formattedDetails = Object.entries(formattedValues)
-      .map(([key, value]) => {
-        const formattedKey = key
-          .replace(/([A-Z])/g, " $1")
-          .replace(/^./, (str) => str.toUpperCase());
-
-        if (key === "ticketTypes") {
-          return `${formattedKey}:\n${(value as string[])
-            .map((ticket) => `  - ${ticket}`)
-            .join("\n")}`;
-        }
-
-        return `${formattedKey}: ${value}`;
-      })
-      .join("\n");
-
     toast({
       title: "We're creating your event...",
       description: (
         <div className="mt-2 max-h-[200px] overflow-y-auto text-sm">
           <p className="mb-2">Your event details:</p>
           <pre className="whitespace-pre-wrap rounded bg-slate-100 p-2 dark:bg-slate-800">
-            {formattedDetails}
+            {JSON.stringify(formattedValues, null, 2)}
           </pre>
         </div>
       ),
       duration: 5000,
     });
 
-    // Execute the createEvent function on the blockchain
     try {
       const eventAddress = await executeCreateEvent(
         values.eventName,
@@ -357,11 +339,9 @@ export default function CreateEventForm() {
           );
         }
 
-        // Initialize the provider using ethers.BrowserProvider for MetaMask
         const provider = new ethers.BrowserProvider(window.ethereum);
         const signer = await provider.getSigner();
 
-        // Initialize the event contract using the eventAddress
         const eventContract = new ethers.Contract(
           eventAddress,
           [
@@ -392,35 +372,46 @@ export default function CreateEventForm() {
           signer
         );
 
-        // Extract ticket details from form values
         const ticketTypes = values.ticketTypes.map((ticket) => ticket.type);
-        const prices = values.ticketTypes.map(
-          (ticket) => ethers.parseUnits(ticket.price.toString(), 6) // Assuming USDC with 6 decimals
+        const prices = values.ticketTypes.map((ticket) =>
+          ethers.parseUnits(ticket.price.toString(), 6)
         );
         const maxSupplies = values.ticketTypes.map((ticket) => ticket.supply);
 
-        // Call the addTickets function
         const tx = await eventContract.addTickets(
           ticketTypes,
           prices,
           maxSupplies
         );
 
-        // Wait for the transaction to be mined
-        const receipt = await tx.wait();
+        await tx.wait();
 
-        console.log("Tickets added successfully:", receipt);
+        console.log("Tickets added successfully!");
 
-        toast({
-          title: "Event created successfully!",
-          description: "You can view your event on the home page.",
-          action: (
-            <ToastAction altText="Go to home" onClick={() => router.push("/")}>
-              Go to home
-            </ToastAction>
-          ),
-          duration: 15000,
-        });
+        // Retry mechanism to verify the contract is ready
+        const isContractReady = await retryVerifyContractReady(eventAddress);
+        if (isContractReady) {
+          toast({
+            title: "Event created successfully!",
+            description: "You can view your event on the home page.",
+            action: (
+              <ToastAction
+                altText="Go to home"
+                onClick={() => router.push("/")}
+              >
+                Go to home
+              </ToastAction>
+            ),
+            duration: 15000,
+          });
+        } else {
+          toast({
+            title: "Event creation delayed",
+            description:
+              "The event contract is still initializing. Please wait a moment and refresh the home page.",
+            duration: 15000,
+          });
+        }
       } catch (error) {
         console.error("Error adding tickets:", error);
       }
@@ -902,4 +893,65 @@ async function executeCreateEvent(
     console.error("Error creating event on blockchain:", error);
     throw error;
   }
+}
+
+// Function to verify if the contract is ready
+async function verifyContractReady(eventAddress: string): Promise<boolean> {
+  try {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const eventContract = new ethers.Contract(
+      eventAddress,
+      [
+        {
+          inputs: [],
+          name: "eventName",
+          outputs: [{ internalType: "string", name: "", type: "string" }],
+          stateMutability: "view",
+          type: "function",
+        },
+      ],
+      provider
+    );
+
+    // Try calling a simple view function to check if the contract is ready
+    await eventContract.eventName();
+    return true;
+  } catch (error) {
+    console.error("Contract not ready:", error);
+    return false;
+  }
+}
+
+// Retry mechanism to verify if the contract is ready
+async function retryVerifyContractReady(
+  eventAddress: string,
+  retries = 5,
+  delay = 3000
+): Promise<boolean> {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const eventContract = new ethers.Contract(
+        eventAddress,
+        [
+          {
+            inputs: [],
+            name: "eventName",
+            outputs: [{ internalType: "string", name: "", type: "string" }],
+            stateMutability: "view",
+            type: "function",
+          },
+        ],
+        provider
+      );
+
+      // Try calling a simple view function to check if the contract is ready
+      await eventContract.eventName();
+      return true;
+    } catch (error) {
+      console.error(`Contract not ready, retrying... (${i + 1}/${retries})`);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+  return false;
 }

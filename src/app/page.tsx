@@ -127,15 +127,12 @@ export default function HomePage() {
               return {
                 address: eventAddress,
                 name: String(name),
-                // Keep the raw timestamp (in seconds) for sorting and a formatted version for display
                 start: new Date(Number(start) * 1000).toLocaleString(),
                 end: new Date(Number(end) * 1000).toLocaleString(),
                 startSale: new Date(Number(startSale) * 1000).toLocaleString(),
                 endSale: new Date(Number(endSale) * 1000).toLocaleString(),
                 nftSymbol: String(nftSymbol),
-                // Add a numeric value to sort by (you could choose a different field if needed)
-                _startTimestamp: Number(start),
-              } as any;
+              };
             } catch (err) {
               console.error(`Error fetching details for ${eventAddress}:`, err);
               return null;
@@ -143,15 +140,12 @@ export default function HomePage() {
           })
         );
 
-        // Filter out any null responses and sort by start time descending
+        // Filter out any null responses
         const filteredDetails = details.filter(
           (detail) => detail !== null
         ) as EventDetail[];
-        filteredDetails.sort(
-          (a: any, b: any) => b._startTimestamp - a._startTimestamp
-        );
-
-        setEventDetails(filteredDetails);
+        // Reverse the array so that the latest created event appears first
+        setEventDetails(filteredDetails.reverse());
       }
     };
 
@@ -193,7 +187,7 @@ export default function HomePage() {
       ) : (
         <>
           <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-            {[...eventDetails].slice(0, visibleCount).map((event, index) => (
+            {eventDetails.slice(0, visibleCount).map((event, index) => (
               <Card key={index} className="transition-shadow hover:shadow-lg">
                 <CardHeader>
                   <CardTitle>{event.name}</CardTitle>
