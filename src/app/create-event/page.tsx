@@ -39,7 +39,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
-const MASTER_CONTRACT_ADDRESS = "0xB3F43A6c0da22743eaF716BEF85A36776566969D"; // Replace with the actual address
+const MASTER_CONTRACT_ADDRESS = "0xe17E3F83652E82Bc99c3ed825DD62fc455a0F4cc"; // Replace with the actual address
 const MASTER_CONTRACT_ABI: Array<{
   inputs?: Array<{
     internalType: string;

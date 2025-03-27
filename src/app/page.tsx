@@ -35,7 +35,7 @@ type EventDetail = {
 
 const contract = getContract({
   client,
-  address: "0xB3F43A6c0da22743eaF716BEF85A36776566969D",
+  address: "0xe17E3F83652E82Bc99c3ed825DD62fc455a0F4cc",
   chain: baseSepolia,
 });
 
@@ -151,6 +151,12 @@ export default function HomePage() {
       await tx.wait();
 
       console.log("Ticket minted successfully!");
+
+      toast({
+        title: "Ticket Minted!",
+        description: `You successfully minted a ${ticketType} ticket`,
+        duration: 10000,
+      });
     } catch (error) {
       console.error("Error minting ticket:", error);
 
@@ -230,22 +236,34 @@ export default function HomePage() {
                 },
                 {
                   inputs: [],
-                  name: "getTicketDetails",
+                  name: "getAllTickets",
                   outputs: [
                     {
-                      internalType: "string[]",
-                      name: "ticketTypeNames",
-                      type: "string[]",
-                    },
-                    {
-                      internalType: "uint256[]",
-                      name: "prices",
-                      type: "uint256[]",
-                    },
-                    {
-                      internalType: "uint256[]",
-                      name: "supplies",
-                      type: "uint256[]",
+                      components: [
+                        {
+                          internalType: "string",
+                          name: "ticketType",
+                          type: "string",
+                        },
+                        {
+                          internalType: "uint256",
+                          name: "price",
+                          type: "uint256",
+                        },
+                        {
+                          internalType: "uint256",
+                          name: "maxSupply",
+                          type: "uint256",
+                        },
+                        {
+                          internalType: "uint256",
+                          name: "minted",
+                          type: "uint256",
+                        },
+                      ],
+                      internalType: "struct EventContract.Ticket[]",
+                      name: "",
+                      type: "tuple[]",
                     },
                   ],
                   stateMutability: "view",
@@ -264,30 +282,15 @@ export default function HomePage() {
               const endSale = await eventContract.eventTiketEndSale();
               const nftSymbol = await eventContract.symbol();
 
-              // Fetch ticket details
-              const ticketDetails = await eventContract.getTicketDetails();
-              console.log("Raw Ticket Details:", ticketDetails);
+              // Fetch ticket details using getAllTickets
+              const tickets = await eventContract.getAllTickets();
+              console.log("Raw Ticket Details:", tickets);
 
-              // Convert Result objects to plain arrays with explicit type casting
-              const ticketTypeNames = Array.from(
-                ticketDetails.ticketTypeNames
-              ) as string[];
-              const prices = Array.from(ticketDetails.prices) as bigint[];
-              const supplies = Array.from(ticketDetails.supplies) as bigint[];
-
-              console.log("Parsed Ticket Details:", {
-                ticketTypeNames,
-                prices,
-                supplies,
-              });
-
-              // Map ticket types and prices
-              const ticketTypes = ticketTypeNames.map(
-                (type: string, index: number) => ({
-                  type,
-                  price: ethers.formatUnits(prices[index], 6), // Format price from smallest unit
-                })
-              );
+              // Map ticket details
+              const ticketTypes = tickets.map((ticket: any) => ({
+                type: ticket.ticketType,
+                price: ethers.formatUnits(ticket.price, 6), // Format price from smallest unit
+              }));
 
               return {
                 address: eventAddress,
