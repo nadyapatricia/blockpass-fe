@@ -174,7 +174,9 @@ export default function HomePage() {
   return (
     <main>
       <div className="justify-center flex flex-col items-center mb-12 mt-4">
-        <h2 className="text-xl text-bold mb-2">Connect your wallet</h2>
+        <h2 className="text-bpPurple text-xl text-bold mb-2">
+          Connect your wallet
+        </h2>
         <ConnectButton client={client} />
       </div>
 
