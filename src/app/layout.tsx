@@ -4,6 +4,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThirdwebProvider } from "thirdweb/react";
 import Header from "@/components/ui/header";
+import Footer from "@/components/ui/footer";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/toaster";
 
@@ -21,11 +22,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={cn(inter.className)}>
+      <body className={cn(inter.className, "flex flex-col min-h-screen")}>
         <ThirdwebProvider>
           <Header />
           <Toaster />
-          <div className="container mx-auto p-4">{children}</div>
+          <main className="flex-grow container mx-auto p-4">{children}</main>
+          <Footer />
         </ThirdwebProvider>
       </body>
     </html>

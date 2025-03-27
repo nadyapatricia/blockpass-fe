@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ethers } from "ethers"; // Import ethers
+import { ethers } from "ethers";
 import { useToast } from "@/hooks/use-toast";
 
 import { client } from "./client";
@@ -30,7 +30,7 @@ type EventDetail = {
   startSale: string;
   endSale: string;
   nftSymbol: string;
-  ticketTypes: { type: string; price: string }[]; // Add ticketTypes
+  ticketTypes: { type: string; price: string }[];
 };
 
 const contract = getContract({
@@ -42,7 +42,11 @@ const contract = getContract({
 export default function HomePage() {
   const router = useRouter();
   const [eventDetails, setEventDetails] = useState<EventDetail[]>([]);
-  const { data, isLoading, error } = useReadContract({
+  const [visibleCount, setVisibleCount] = useState(8);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState(""); // State for search query
+
+  const { data, error } = useReadContract({
     contract,
     method: "function getAllEvents() external view returns (address[] memory)",
   });
@@ -56,11 +60,9 @@ export default function HomePage() {
         );
       }
 
-      // Initialize ethers.js provider and signer
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
 
-      // USDC token contract address (replace with the actual USDC token address)
       const usdcTokenAddress = "0x036CbD53842c5426634e7929541eC2318f3dCF7e"; // USDC on Base Sepolia Testnet
       const usdcToken = new ethers.Contract(
         usdcTokenAddress,
@@ -79,15 +81,10 @@ export default function HomePage() {
         signer
       );
 
-      // Approve the event contract to spend the required amount of USDC
       const ticketPrice = ethers.parseUnits("100", 6); // Replace "100" with the actual ticket price in USDC
       const approveTx = await usdcToken.approve(eventAddress, ticketPrice);
-
-      // Wait for the approval transaction to be mined
       await approveTx.wait();
-      console.log("USDC approved successfully!");
 
-      // Initialize the event contract
       const eventContract = new ethers.Contract(
         eventAddress,
         [
@@ -100,67 +97,20 @@ export default function HomePage() {
             stateMutability: "nonpayable",
             type: "function",
           },
-          {
-            anonymous: false,
-            inputs: [
-              {
-                indexed: true,
-                internalType: "address",
-                name: "buyer",
-                type: "address",
-              },
-              {
-                indexed: false,
-                internalType: "string",
-                name: "ticketType",
-                type: "string",
-              },
-              {
-                indexed: false,
-                internalType: "uint256",
-                name: "tokenId",
-                type: "uint256",
-              },
-            ],
-            name: "TicketMinted",
-            type: "event",
-          },
         ],
         signer
       );
 
-      // Listen for the TicketMinted event
-      eventContract.on("TicketMinted", (buyer, ticketType, tokenId) => {
-        console.log("TicketMinted event:", { buyer, ticketType, tokenId });
-
-        // Show a toast notification when the event is emitted
-        toast({
-          title: "Ticket Minted!",
-          description: `You successfully minted a ${ticketType} ticket. Token ID: ${tokenId}`,
-          duration: 10000,
-        });
-
-        // Remove the event listener after it's triggered
-        eventContract.removeAllListeners("TicketMinted");
-      });
-
-      // Call the mintTicket function
       const tx = await eventContract.mintTicket(ticketType);
-
-      // Wait for the transaction to be mined
       await tx.wait();
-
-      console.log("Ticket minted successfully!");
 
       toast({
         title: "Ticket Minted!",
-        description: `You successfully minted a ${ticketType} ticket`,
+        description: `You successfully minted a ${ticketType} ticket.`,
         duration: 10000,
       });
     } catch (error) {
       console.error("Error minting ticket:", error);
-
-      // Show an error toast
       toast({
         title: "Error",
         description: "Failed to mint the ticket. Please try again.",
@@ -171,6 +121,7 @@ export default function HomePage() {
 
   useEffect(() => {
     const fetchEventDetails = async () => {
+      setLoading(true);
       if (data) {
         const details = await Promise.all(
           data.map(async (eventAddress: string) => {
@@ -274,7 +225,6 @@ export default function HomePage() {
             );
 
             try {
-              // Fetch event details
               const name = await eventContract.eventName();
               const start = await eventContract.eventStart();
               const end = await eventContract.eventEnd();
@@ -282,14 +232,10 @@ export default function HomePage() {
               const endSale = await eventContract.eventTiketEndSale();
               const nftSymbol = await eventContract.symbol();
 
-              // Fetch ticket details using getAllTickets
               const tickets = await eventContract.getAllTickets();
-              console.log("Raw Ticket Details:", tickets);
-
-              // Map ticket details
               const ticketTypes = tickets.map((ticket: any) => ({
                 type: ticket.ticketType,
-                price: ethers.formatUnits(ticket.price, 6), // Format price from smallest unit
+                price: ethers.formatUnits(ticket.price, 6),
               }));
 
               return {
@@ -300,7 +246,7 @@ export default function HomePage() {
                 startSale: new Date(Number(startSale) * 1000).toLocaleString(),
                 endSale: new Date(Number(endSale) * 1000).toLocaleString(),
                 nftSymbol: String(nftSymbol),
-                ticketTypes, // Include ticket types
+                ticketTypes,
               };
             } catch (err) {
               console.error(`Error fetching details for ${eventAddress}:`, err);
@@ -313,14 +259,21 @@ export default function HomePage() {
           details.filter((detail) => detail !== null) as EventDetail[]
         );
       }
+      setLoading(false);
     };
 
     fetchEventDetails();
   }, [data]);
 
-  if (error) {
-    console.error("Error reading contract:", error);
-  }
+  const filteredEvents = eventDetails.filter(
+    (event) =>
+      event.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      event.nftSymbol.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const showMoreEvents = () => {
+    setVisibleCount((prevCount) => prevCount + 8);
+  };
 
   return (
     <main>
@@ -329,12 +282,13 @@ export default function HomePage() {
         <ConnectButton client={client} />
       </div>
 
-      {/* Search bar & Create button */}
       <div className="my-6 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
         <Input
           type="text"
           placeholder="Search events..."
           className="w-full max-w-sm"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
         />
         <Button
           className="whitespace-nowrap"
@@ -344,11 +298,11 @@ export default function HomePage() {
         </Button>
       </div>
 
-      {isLoading ? (
-        <p>Loading events..</p>
+      {loading ? (
+        <p>Loading events...</p>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {eventDetails.map((event, index) => (
+          {filteredEvents.slice(0, visibleCount).map((event, index) => (
             <Card key={index} className="transition-shadow hover:shadow-lg">
               <CardHeader>
                 <CardTitle>{event.name}</CardTitle>
@@ -379,6 +333,11 @@ export default function HomePage() {
               </CardContent>
             </Card>
           ))}
+          {visibleCount < filteredEvents.length && (
+            <div className="mt-4 flex justify-center">
+              <Button onClick={showMoreEvents}>Show more events</Button>
+            </div>
+          )}
         </div>
       )}
     </main>
