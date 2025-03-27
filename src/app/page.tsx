@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ethers } from "ethers"; // Import ethers
+import { ethers } from "ethers";
 
 import { client } from "./client";
 
@@ -40,6 +40,8 @@ const contract = getContract({
 export default function HomePage() {
   const router = useRouter();
   const [eventDetails, setEventDetails] = useState<EventDetail[]>([]);
+  const [visibleCount, setVisibleCount] = useState(8);
+
   const { data, isLoading, error } = useReadContract({
     contract,
     method: "function getAllEvents() external view returns (address[] memory)",
@@ -50,7 +52,6 @@ export default function HomePage() {
       if (data) {
         const details = await Promise.all(
           data.map(async (eventAddress: string) => {
-            // Use ethers.js to create a contract instance
             const provider = new ethers.JsonRpcProvider(
               "https://base-sepolia.g.alchemy.com/v2/rUkR8zbPWCVxMa6moNb6PBmyHPlVj_6m"
             );
@@ -116,7 +117,6 @@ export default function HomePage() {
             );
 
             try {
-              // Use ethers.js to call the contract methods
               const name = await eventContract.eventName();
               const start = await eventContract.eventStart();
               const end = await eventContract.eventEnd();
@@ -127,12 +127,15 @@ export default function HomePage() {
               return {
                 address: eventAddress,
                 name: String(name),
+                // Keep the raw timestamp (in seconds) for sorting and a formatted version for display
                 start: new Date(Number(start) * 1000).toLocaleString(),
                 end: new Date(Number(end) * 1000).toLocaleString(),
                 startSale: new Date(Number(startSale) * 1000).toLocaleString(),
                 endSale: new Date(Number(endSale) * 1000).toLocaleString(),
                 nftSymbol: String(nftSymbol),
-              };
+                // Add a numeric value to sort by (you could choose a different field if needed)
+                _startTimestamp: Number(start),
+              } as any;
             } catch (err) {
               console.error(`Error fetching details for ${eventAddress}:`, err);
               return null;
@@ -140,9 +143,15 @@ export default function HomePage() {
           })
         );
 
-        setEventDetails(
-          details.filter((detail) => detail !== null) as EventDetail[]
+        // Filter out any null responses and sort by start time descending
+        const filteredDetails = details.filter(
+          (detail) => detail !== null
+        ) as EventDetail[];
+        filteredDetails.sort(
+          (a: any, b: any) => b._startTimestamp - a._startTimestamp
         );
+
+        setEventDetails(filteredDetails);
       }
     };
 
@@ -152,6 +161,10 @@ export default function HomePage() {
   if (error) {
     console.error("Error reading contract:", error);
   }
+
+  const showMoreEvents = () => {
+    setVisibleCount((prevCount) => prevCount + 8);
+  };
 
   return (
     <main>
@@ -178,25 +191,32 @@ export default function HomePage() {
       {isLoading ? (
         <p>Loading events..</p>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {eventDetails.map((event, index) => (
-            <Card key={index} className="transition-shadow hover:shadow-lg">
-              <CardHeader>
-                <CardTitle>{event.name}</CardTitle>
-                <CardDescription>
-                  <p>Symbol: {event.nftSymbol}</p>
-                  <p>Start: {event.start}</p>
-                  <p>End: {event.end}</p>
-                  <p>Sale Start: {event.startSale}</p>
-                  <p>Sale End: {event.endSale}</p>
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button variant="outline">View Details</Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <>
+          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            {[...eventDetails].slice(0, visibleCount).map((event, index) => (
+              <Card key={index} className="transition-shadow hover:shadow-lg">
+                <CardHeader>
+                  <CardTitle>{event.name}</CardTitle>
+                  <CardDescription>
+                    <p>Symbol: {event.nftSymbol}</p>
+                    <p>Start: {event.start}</p>
+                    <p>End: {event.end}</p>
+                    <p>Sale Start: {event.startSale}</p>
+                    <p>Sale End: {event.endSale}</p>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button variant="outline">View Details</Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          {visibleCount < eventDetails.length && (
+            <div className="mt-4 flex justify-center">
+              <Button onClick={showMoreEvents}>Show more events</Button>
+            </div>
+          )}
+        </>
       )}
     </main>
   );
