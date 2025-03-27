@@ -13,7 +13,7 @@ export default function Header() {
     <header className="bg-gradient-to-r from-[#9120AC] to-[#DE35A0] p-6 flex justify-between items-center">
       {/* Left side: Logo */}
       <div
-        className="flex items-center space-x-3"
+        className="flex items-center space-x-3 hover:cursor-pointer"
         onClick={() => router.push("/")}
       >
         <Image
