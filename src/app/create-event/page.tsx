@@ -310,7 +310,7 @@ export default function CreateEventForm() {
           </pre>
         </div>
       ),
-      duration: 5000,
+      duration: 15000,
     });
 
     try {
@@ -397,7 +397,7 @@ export default function CreateEventForm() {
             action: (
               <ToastAction
                 altText="Go to home"
-                onClick={() => router.push("/")}
+                onClick={() => (window.location.href = "/")} // Hard reload the browser
               >
                 Go to home
               </ToastAction>
